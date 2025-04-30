@@ -11,8 +11,8 @@
 
     body {
       font-family: 'Arial', sans-serif;
-      background: #222;
-      color: #fff;
+      background: #fff;
+      color: #000;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -29,7 +29,7 @@
       margin: 5px;
       padding: 10px;
       border-radius: 6px;
-      border: none;
+      border: 1px solid #ccc;
     }
 
     button {
@@ -39,9 +39,9 @@
     }
 
     canvas {
-      border: 2px solid #fff;
+      border: 2px solid #000;
       margin-top: 20px;
-      background: #111;
+      background: #fff;
       max-width: 100%;
     }
 
@@ -64,13 +64,14 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
+      background: rgba(255, 255, 255, 0.9);
+      color: #000;
       font-size: 60px;
       padding: 40px;
       border-radius: 20px;
       z-index: 10;
       text-align: center;
+      border: 2px solid #000;
     }
   </style>
 </head>
@@ -205,7 +206,7 @@
 
       this.draw = function () {
         this.snakeArray.forEach((seg) => {
-          ctx.fillStyle = "#0f0"; // Vert
+          ctx.fillStyle = "#0f0"; // Toujours vert
           ctx.fillRect(seg.x * scale, seg.y * scale, scale, scale);
         });
       };
