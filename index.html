@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Snake Game</title>
+  <title>Snake - Mode Multijoueur</title>
   <style>
     * {
       box-sizing: border-box;
@@ -70,25 +70,6 @@
       text-align: center;
     }
 
-    #mobileControls {
-      display: none;
-      margin-top: 20px;
-    }
-
-    .mobile-row {
-      text-align: center;
-    }
-
-    #mobileControls button {
-      font-size: 30px;
-      padding: 20px;
-      margin: 5px;
-      border-radius: 10px;
-      border: none;
-      background-color: #444;
-      color: white;
-    }
-
     @media (max-width: 768px) {
       #mobileControls {
         display: block;
@@ -113,9 +94,9 @@
 </head>
 <body>
 
-  <h1>Snake</h1>
+  <h1>Snake - Mode Multijoueur</h1>
 
-  <input type="text" id="playerNameInput" placeholder="Votre nom" />
+  <input type="text" id="playerNameInput" placeholder="Nom du joueur" />
   <select id="speedSelector">
     <option value="200">Lent</option>
     <option value="100" selected>Moyen</option>
@@ -129,22 +110,11 @@
 
   <div id="gameOver">
     <strong>Game Over</strong><br>
-    Joueur : <span id="playerNameDisplay"></span><br>
-    Score : <span id="score"></span>
+    Score Joueur 1 : <span id="score1"></span><br>
+    Score Joueur 2 : <span id="score2"></span>
   </div>
 
   <button id="restartButton" onclick="restartGame()">Rejouer</button>
-
-  <div id="mobileControls">
-    <div class="mobile-row">
-      <button onclick="snake?.changeDirection('up')">⬆️</button>
-    </div>
-    <div class="mobile-row">
-      <button onclick="snake?.changeDirection('left')">⬅️</button>
-      <button onclick="snake?.changeDirection('down')">⬇️</button>
-      <button onclick="snake?.changeDirection('right')">➡️</button>
-    </div>
-  </div>
 
   <h2>Classement</h2>
   <table id="leaderboard">
@@ -161,15 +131,15 @@
     const rows = canvas.height / scale;
     const columns = canvas.width / scale;
 
-    let snake, fruit, gameInterval;
+    let player1, player2, fruit, gameInterval;
     let playerName = "";
 
     const startButton = document.getElementById("startButton");
     const playerNameInput = document.getElementById("playerNameInput");
     const speedSelector = document.getElementById("speedSelector");
     const gameOverElement = document.getElementById("gameOver");
-    const playerNameDisplay = document.getElementById("playerNameDisplay");
-    const scoreElement = document.getElementById("score");
+    const score1Element = document.getElementById("score1");
+    const score2Element = document.getElementById("score2");
     const countdown = document.getElementById("startCountdown");
     const countdownText = document.getElementById("countdownText");
 
@@ -189,7 +159,8 @@
 
     function setup() {
       if (gameInterval) clearInterval(gameInterval);
-      snake = new Snake();
+      player1 = new Snake('player1');
+      player2 = new Snake('player2');
       fruit = new Fruit();
       gameOverElement.style.display = "none";
       document.getElementById("restartButton").style.display = "none";
@@ -216,28 +187,34 @@
 
     function gameLoop() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      snake.update();
-      snake.draw();
+      player1.update();
+      player1.draw();
+      player2.update();
+      player2.draw();
       fruit.draw();
 
-      if (snake.eat(fruit)) {
+      if (player1.eat(fruit)) {
         fruit.randomize();
-        snake.grow();
+        player1.grow();
+      }
+      if (player2.eat(fruit)) {
+        fruit.randomize();
+        player2.grow();
       }
 
-      if (snake.collides()) {
+      if (player1.collides() || player2.collides()) {
         endGame();
       }
     }
 
     function endGame() {
       clearInterval(gameInterval);
-      const score = snake.length - 1;
-      const best = saveHighScore(playerName, score);
+      const score1 = player1.length - 1;
+      const score2 = player2.length - 1;
       gameOverElement.style.display = "block";
       document.getElementById("restartButton").style.display = "inline-block";
-      playerNameDisplay.textContent = playerName;
-      scoreElement.innerHTML = `${score}<br>Meilleur score : ${best}`;
+      score1Element.innerHTML = score1;
+      score2Element.innerHTML = score2;
       updateLeaderboard();
     }
 
@@ -245,10 +222,11 @@
       setup();
     }
 
-    function Snake() {
+    function Snake(player) {
+      this.player = player;
       this.snakeArray = [{ x: 10, y: 10 }];
       this.length = 1;
-      this.direction = "right";
+      this.direction = player === 'player1' ? 'right' : 'left';
 
       this.update = function () {
         const head = { ...this.snakeArray[0] };
@@ -265,8 +243,8 @@
       };
 
       this.draw = function () {
-        this.snakeArray.forEach((seg, i) => {
-          ctx.fillStyle = i === 0 ? "#0f0" : "#fff";
+        this.snakeArray.forEach((seg) => {
+          ctx.fillStyle = "#0f0"; // Vert
           ctx.fillRect(seg.x * scale, seg.y * scale, scale, scale);
         });
       };
@@ -331,10 +309,17 @@
     }
 
     window.addEventListener("keydown", (e) => {
-      const dir = e.key.replace("Arrow", "").toLowerCase();
-      if (["up", "down", "left", "right"].includes(dir)) {
-        snake?.changeDirection(dir);
-      }
+      const keyMap = {
+        player1: {
+          ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right"
+        },
+        player2: {
+          w: "up", s: "down", a: "left", d: "right"
+        }
+      };
+
+      if (keyMap.player1[e.key]) player1.changeDirection(keyMap.player1[e.key]);
+      if (keyMap.player2[e.key]) player2.changeDirection(keyMap.player2[e.key]);
     });
 
     updateLeaderboard();
