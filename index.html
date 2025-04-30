@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Snake - Mode Multijoueur</title>
+  <title>Snake - Jeu</title>
   <style>
     * {
       box-sizing: border-box;
@@ -20,7 +20,7 @@
       padding: 20px;
     }
 
-    h1, h2 {
+    h1 {
       margin: 10px;
     }
 
@@ -58,24 +58,6 @@
       margin-top: 10px;
     }
 
-    #leaderboard {
-      margin-top: 30px;
-      border-collapse: collapse;
-      background: #333;
-    }
-
-    th, td {
-      padding: 8px 16px;
-      border: 1px solid #666;
-      text-align: center;
-    }
-
-    @media (max-width: 768px) {
-      #mobileControls {
-        display: block;
-      }
-    }
-
     #startCountdown {
       display: none;
       position: absolute;
@@ -94,7 +76,7 @@
 </head>
 <body>
 
-  <h1>Snake - Mode Multijoueur</h1>
+  <h1>Snake - Jeu</h1>
 
   <input type="text" id="playerNameInput" placeholder="Nom du joueur" />
   <select id="speedSelector">
@@ -110,19 +92,10 @@
 
   <div id="gameOver">
     <strong>Game Over</strong><br>
-    Score Joueur 1 : <span id="score1"></span><br>
-    Score Joueur 2 : <span id="score2"></span>
+    Score : <span id="score"></span>
   </div>
 
   <button id="restartButton" onclick="restartGame()">Rejouer</button>
-
-  <h2>Classement</h2>
-  <table id="leaderboard">
-    <thead>
-      <tr><th>Joueur</th><th>Meilleur Score</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
 
   <script>
     const canvas = document.getElementById("snakeGame");
@@ -131,15 +104,14 @@
     const rows = canvas.height / scale;
     const columns = canvas.width / scale;
 
-    let player1, player2, fruit, gameInterval;
+    let snake, fruit, gameInterval;
     let playerName = "";
 
     const startButton = document.getElementById("startButton");
     const playerNameInput = document.getElementById("playerNameInput");
     const speedSelector = document.getElementById("speedSelector");
     const gameOverElement = document.getElementById("gameOver");
-    const score1Element = document.getElementById("score1");
-    const score2Element = document.getElementById("score2");
+    const scoreElement = document.getElementById("score");
     const countdown = document.getElementById("startCountdown");
     const countdownText = document.getElementById("countdownText");
 
@@ -159,8 +131,7 @@
 
     function setup() {
       if (gameInterval) clearInterval(gameInterval);
-      player1 = new Snake('player1');
-      player2 = new Snake('player2');
+      snake = new Snake();
       fruit = new Fruit();
       gameOverElement.style.display = "none";
       document.getElementById("restartButton").style.display = "none";
@@ -187,46 +158,36 @@
 
     function gameLoop() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      player1.update();
-      player1.draw();
-      player2.update();
-      player2.draw();
+      snake.update();
+      snake.draw();
       fruit.draw();
 
-      if (player1.eat(fruit)) {
+      if (snake.eat(fruit)) {
         fruit.randomize();
-        player1.grow();
-      }
-      if (player2.eat(fruit)) {
-        fruit.randomize();
-        player2.grow();
+        snake.grow();
       }
 
-      if (player1.collides() || player2.collides()) {
+      if (snake.collides()) {
         endGame();
       }
     }
 
     function endGame() {
       clearInterval(gameInterval);
-      const score1 = player1.length - 1;
-      const score2 = player2.length - 1;
+      const score = snake.length - 1;
       gameOverElement.style.display = "block";
       document.getElementById("restartButton").style.display = "inline-block";
-      score1Element.innerHTML = score1;
-      score2Element.innerHTML = score2;
-      updateLeaderboard();
+      scoreElement.innerHTML = score;
     }
 
     function restartGame() {
       setup();
     }
 
-    function Snake(player) {
-      this.player = player;
+    function Snake() {
       this.snakeArray = [{ x: 10, y: 10 }];
       this.length = 1;
-      this.direction = player === 'player1' ? 'right' : 'left';
+      this.direction = 'right';
 
       this.update = function () {
         const head = { ...this.snakeArray[0] };
@@ -288,41 +249,13 @@
       };
     }
 
-    function saveHighScore(name, score) {
-      const scores = JSON.parse(localStorage.getItem("snakeHighScores")) || {};
-      const best = scores[name] || 0;
-      if (score > best) {
-        scores[name] = score;
-        localStorage.setItem("snakeHighScores", JSON.stringify(scores));
-      }
-      return scores[name];
-    }
-
-    function updateLeaderboard() {
-      const scores = JSON.parse(localStorage.getItem("snakeHighScores")) || {};
-      const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-      const tbody = document.querySelector("#leaderboard tbody");
-      tbody.innerHTML = "";
-      for (const [name, score] of sorted) {
-        tbody.innerHTML += `<tr><td>${name}</td><td>${score}</td></tr>`;
-      }
-    }
-
     window.addEventListener("keydown", (e) => {
       const keyMap = {
-        player1: {
-          ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right"
-        },
-        player2: {
-          w: "up", s: "down", a: "left", d: "right"
-        }
+        ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right"
       };
 
-      if (keyMap.player1[e.key]) player1.changeDirection(keyMap.player1[e.key]);
-      if (keyMap.player2[e.key]) player2.changeDirection(keyMap.player2[e.key]);
+      if (keyMap[e.key]) snake.changeDirection(keyMap[e.key]);
     });
-
-    updateLeaderboard();
   </script>
 </body>
 </html>
