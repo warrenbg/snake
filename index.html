@@ -3,21 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Jeu Snake</title>
+  <title>Snake avec Skins</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
       background-color: #f0f0f0;
       margin: 0;
       padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
+
     canvas {
       border: 1px solid #000;
       margin-top: 10px;
+      max-width: 100%;
+      height: auto;
     }
+
+    input, select, button {
+      margin: 5px;
+      font-size: 16px;
+    }
+
     #gameOver {
       display: none;
       text-align: center;
@@ -25,6 +34,7 @@
       color: red;
       margin-top: 20px;
     }
+
     #restartButton {
       display: none;
       margin-top: 10px;
@@ -36,30 +46,51 @@
       border-radius: 5px;
       cursor: pointer;
     }
-    input, select, button {
-      margin: 5px;
-      font-size: 16px;
-    }
+
     table {
       margin-top: 20px;
       border-collapse: collapse;
     }
+
     th, td {
       padding: 6px 12px;
       border: 1px solid #999;
       text-align: center;
     }
+
+    #mobileControls {
+      display: none;
+      margin-top: 20px;
+    }
+
+    #mobileControls button {
+      font-size: 24px;
+      padding: 10px 20px;
+      margin: 5px;
+    }
+
+    @media (max-width: 600px) {
+      canvas {
+        width: 100%;
+        height: auto;
+      }
+    }
   </style>
 </head>
 <body>
 
-  <h1>Snake Game</h1>
+  <h1>Snake Game avec Skins</h1>
 
   <input type="text" id="playerNameInput" placeholder="Entrez votre nom" />
   <select id="speedSelector">
     <option value="200">Lent</option>
     <option value="100" selected>Moyen</option>
     <option value="50">Rapide</option>
+  </select>
+  <select id="skinSelector">
+    <option value="green">Serpent Vert</option>
+    <option value="blue">Serpent Bleu</option>
+    <option value="rainbow">Serpent Arc-en-ciel</option>
   </select>
   <button id="startButton">Commencer</button>
 
@@ -72,6 +103,17 @@
   </div>
 
   <button id="restartButton" onclick="restartGame()">Rejouer</button>
+
+  <div id="mobileControls">
+    <div style="display: flex; justify-content: center;">
+      <button onclick="snake.changeDirection('up')">⬆️</button>
+    </div>
+    <div style="display: flex; justify-content: center;">
+      <button onclick="snake.changeDirection('left')">⬅️</button>
+      <button onclick="snake.changeDirection('down')">⬇️</button>
+      <button onclick="snake.changeDirection('right')">➡️</button>
+    </div>
+  </div>
 
   <h2>Classement</h2>
   <table id="leaderboard">
@@ -90,6 +132,7 @@
 
     let snake, fruit, gameInterval;
     let playerName = '';
+    let snakeSkin = 'green';
 
     const playerNameInput = document.getElementById('playerNameInput');
     const playerNameDisplay = document.getElementById('playerNameDisplay');
@@ -97,6 +140,7 @@
     const gameOverElement = document.getElementById('gameOver');
     const restartButton = document.getElementById('restartButton');
     const speedSelector = document.getElementById('speedSelector');
+    const skinSelector = document.getElementById('skinSelector');
     const startButton = document.getElementById('startButton');
 
     startButton.onclick = () => {
@@ -106,10 +150,12 @@
         return;
       }
       playerName = name;
+      snakeSkin = skinSelector.value;
       document.getElementById('snakeGame').style.display = 'block';
       startButton.style.display = 'none';
       playerNameInput.style.display = 'none';
       speedSelector.style.display = 'none';
+      skinSelector.style.display = 'none';
       setup();
     };
 
@@ -117,6 +163,7 @@
       if (gameInterval) clearInterval(gameInterval);
       snake = new Snake();
       fruit = new Fruit();
+      fruit.randomize();
       gameOverElement.style.display = 'none';
       restartButton.style.display = 'none';
 
@@ -165,7 +212,12 @@
 
       this.draw = function () {
         this.snakeArray.forEach((segment, index) => {
-          ctx.fillStyle = index === 0 ? 'green' : 'green';
+          if (snakeSkin === 'rainbow') {
+            const colors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'];
+            ctx.fillStyle = colors[index % colors.length];
+          } else {
+            ctx.fillStyle = snakeSkin;
+          }
           ctx.fillRect(segment.x * scale, segment.y * scale, scale, scale);
         });
       };
@@ -237,23 +289,29 @@
       const leaderboard = document.querySelector("#leaderboard tbody");
       const scores = JSON.parse(localStorage.getItem("snakeHighScores")) || {};
 
-      const sortedScores = Object.entries(scores)
-        .sort((a, b) => b[1] - a[1]);
+      const sortedScores = Object.entries(scores).sort((a, b) => b[1] - a[1]);
 
       leaderboard.innerHTML = "";
-
       for (const [name, score] of sortedScores) {
         const row = `<tr><td>${name}</td><td>${score}</td></tr>`;
         leaderboard.innerHTML += row;
       }
     }
 
+    // Clavier
     window.addEventListener('keydown', e => {
       const direction = e.key.replace('Arrow', '').toLowerCase();
-      snake.changeDirection(direction);
+      if (['up', 'down', 'left', 'right'].includes(direction)) {
+        snake.changeDirection(direction);
+      }
     });
 
-    updateLeaderboard(); // Affiche le classement dès le chargement
+    // Affiche les boutons mobiles si écran tactile
+    if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+      document.getElementById('mobileControls').style.display = 'block';
+    }
+
+    updateLeaderboard();
   </script>
 </body>
 </html>
